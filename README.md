@@ -56,7 +56,7 @@ To deploy the DJR Tenda Salary Management System, please follow the steps outlin
 1.  **Clone the Repository**
     Clone the project source code to your local machine:
     ```bash
-    git clone [https://github.com/your-username/djr-tenda-system.git](https://github.com/your-username/djr-tenda-system.git)
+    git clone https://github.com/djrtenda/web
     cd djr-tenda-system
     ```
 
