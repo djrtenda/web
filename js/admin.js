@@ -628,34 +628,29 @@ function hideDistributeSalaryModal() {
     }
 }
 
-
 function handleAddEmployee(e) {
-    e.preventDefault();
+    e.preventDefault(); // Mencegah form submit default
+    
+    // 1. Ambil data dari form
     const name = document.getElementById('employeeName').value.trim();
     const password = document.getElementById('employeePassword').value;
+
+    // Validasi input
     if (!name || !password) {
-        DJRTenda.showError('Mohon isi semua field.');
+        DJRTenda.showError('Nama dan Password wajib diisi.');
         return;
     }
+
+    // 2. Siapkan link WhatsApp
     const waNumber = "6285254597065";
-    const message = `*CREATE USER*%0A--------------------------%0ANama: *${name}*%0APassword: *${password}*`;
-    const encodedMessage = encodeURIComponent(message.replace(/%0A/g, '\n')).replace(/%2A/g, '*');
-    const waLink = `https://wa.me/${waNumber}?text=${encodedMessage}`;
+    const messageText = `*CREATE USER*\n--------------------------\nNama: *${name}*\nPassword: *${password}*`;
+    const waLink = `https://api.whatsapp.com/send/?phone=${waNumber}&text=${encodeURIComponent(messageText)}`;
+    
+    hideAddEmployeeModal(); 
+    
+    DJRTenda.showNotification('Membuka WhatsApp untuk mengirim kredensial...', true);
 
-    const form = document.getElementById('addEmployeeForm');
-    const linkContainer = document.getElementById('linkGeneratedContainer');
-    const generatedLink = document.getElementById('generatedWaLink');
-
-    form.classList.add('opacity-0');
-    setTimeout(() => {
-        form.classList.add('hidden');
-        generatedLink.href = waLink;
-        linkContainer.classList.remove('hidden');
-        linkContainer.classList.add('opacity-0');
-        setTimeout(() => {
-            linkContainer.classList.remove('opacity-0');
-        }, 50);
-    }, 300);
+    window.open(waLink, '_blank');
 }
 
 function showAddSalaryModal(employeeId, employeeName) {
