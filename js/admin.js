@@ -23,7 +23,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
     setupEventListeners();
     setupTabs();
+
+    // Popstate listener untuk back button ketika modal terbuka
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.modal === 'addEmployee') {
+            hideAddEmployeeModal();
+        }
+    });
 });
+
 
 function setupEventListeners() {
     document.getElementById('distributeSalaryBtn').addEventListener('click', showDistributeSalaryModal);
@@ -594,24 +602,32 @@ function filterEmployees() {
 
 function showAddEmployeeModal() {
     document.getElementById('addEmployeeModal').classList.remove('hidden');
+    history.pushState({ modal: 'addEmployee' }, 'Tambah Karyawan');
 }
 
 function hideAddEmployeeModal() {
     const modal = document.getElementById('addEmployeeModal');
-    modal.classList.add('hidden');
-    document.getElementById('addEmployeeForm').reset();
-    document.getElementById('addEmployeeForm').classList.remove('hidden', 'opacity-0');
-    document.getElementById('linkGeneratedContainer').classList.add('hidden');
+    if (!modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+        document.getElementById('addEmployeeForm').reset();
+        document.getElementById('addEmployeeForm').classList.remove('hidden', 'opacity-0');
+        document.getElementById('linkGeneratedContainer').classList.add('hidden');
+    }
 }
+
 
 function showDistributeSalaryModal() {
     document.getElementById('distributeSalaryModal').classList.remove('hidden');
 }
 
 function hideDistributeSalaryModal() {
-    document.getElementById('distributeSalaryModal').classList.add('hidden');
-    document.getElementById('distributeSalaryForm').reset();
+    const modal = document.getElementById('distributeSalaryModal');
+    if (!modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+        document.getElementById('distributeSalaryForm').reset();
+    }
 }
+
 
 function handleAddEmployee(e) {
     e.preventDefault();
@@ -649,8 +665,11 @@ function showAddSalaryModal(employeeId, employeeName) {
 }
 
 function hideAddSalaryModal() {
-    document.getElementById('addSalaryModal').classList.add('hidden');
-    document.getElementById('addSalaryForm').reset();
+    const modal = document.getElementById('addSalaryModal');
+    if (!modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+        document.getElementById('addSalaryForm').reset();
+    }
 }
 
 function renderTransactionsTable(dataToRender) {
