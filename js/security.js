@@ -170,17 +170,20 @@ function validateForm(formId, rules) {
     return isValid;
 }
 
-if (window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
+const currentPagePath = window.location.pathname;
+
+if (!currentPagePath.endsWith('/index.html') && currentPagePath !== '/' && currentPagePath.split('/').pop() !== '') {
     if (!Security.session.isSessionValid()) {
+        // Tampilkan alert hanya jika session benar-benar tidak valid
         alert('Sesi Anda telah berakhir. Silakan login kembali.');
         Security.session.clearSession();
         window.location.href = 'index.html';
         return;
     }
 
+    // Perbarui timestamp session jika valid
     Security.session.updateSession();
-}
-    
+}    
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
