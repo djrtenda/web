@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - DJR Tenda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.5.23/dist/jspdf.plugin.autotable.js"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-tent text-blue-600 text-2xl mr-3"></i>
+                        <h1 class="text-xl font-bold text-gray-900">
+                            <span>DJR Tenda</span>
+                            <span class="hidden sm:inline"> - Admin</span>
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-700 flex items-center">
+                        <i class="fas fa-user-shield mr-2"></i>
+                        <span id="adminName" class="font-medium">Admin</span>
+                    </span>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium transition duration-150 flex items-center">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="hidden sm:inline ml-2">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0"><i class="fas fa-users text-blue-600 text-2xl"></i></div><div class="ml-5 w-0 flex-1"><dl><dt class="text-sm font-medium text-gray-500 truncate">Total Karyawan</dt><dd class="text-lg font-medium text-gray-900" id="totalEmployees">0</dd></dl></div></div></div></div>
+            <div class="bg-white overflow-hidden shadow rounded-lg"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0"><i class="fas fa-money-bill-wave text-green-600 text-2xl"></i></div><div class="ml-5 w-0 flex-1"><dl><dt class="text-sm font-medium text-gray-500 truncate">Total Gaji Dibagikan</dt><dd class="text-lg font-medium text-gray-900" id="totalSalaryDistributed">Rp 0</dd></dl></div></div></div></div>
+            <div class="bg-white overflow-hidden shadow rounded-lg"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0"><i class="fas fa-hand-holding-usd text-yellow-600 text-2xl"></i></div><div class="ml-5 w-0 flex-1"><dl><dt class="text-sm font-medium text-gray-500 truncate">Permintaan Penarikan</dt><dd class="text-lg font-medium text-gray-900" id="pendingWithdrawals">0</dd></dl></div></div></div></div>
+            <div class="bg-white overflow-hidden shadow rounded-lg"><div class="p-5"><div class="flex items-center"><div class="flex-shrink-0"><i class="fas fa-chart-line text-purple-600 text-2xl"></i></div><div class="ml-5 w-0 flex-1"><dl><dt class="text-sm font-medium text-gray-500 truncate">Transaksi Bulan Ini</dt><dd class="text-lg font-medium text-gray-900" id="monthlyTransactions">0</dd></dl></div></div></div></div>
+        </div>
+        
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-8">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <i class="fas fa-chart-bar mr-2"></i>Distribusi Gaji (6 Bulan Terakhir)
+            </h3>
+            <div class="h-64 sm:h-72">
+                <canvas id="salaryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-lg mb-8"><div class="px-4 py-5 sm:p-6"><h3 class="text-lg leading-6 font-medium text-gray-900 mb-4"><i class="fas fa-bolt mr-2"></i>Aksi Cepat</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="distributeSalaryBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition duration-150 flex items-center justify-center"><i class="fas fa-plus mr-2"></i>Bagikan Gaji Serentak</button><button id="addEmployeeBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition duration-150 flex items-center justify-center"><i class="fas fa-user-plus mr-2"></i>Tambah Karyawan</button></div></div></div>
+
+        <div class="bg-white shadow rounded-lg">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex justify-around">
+                    <button class="tab-button active flex-1 text-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="employees"><i class="fas fa-users"></i><span class="hidden sm:inline ml-2">Kelola Karyawan</span></button>
+                    <button class="tab-button flex-1 text-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="withdrawals"><i class="fas fa-hand-holding-usd"></i><span class="hidden sm:inline ml-2">Permintaan Penarikan</span></button>
+                    <button class="tab-button flex-1 text-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="transactions"><i class="fas fa-history"></i><span class="hidden sm:inline ml-2">Log Transaksi</span></button>
+                </nav>
+            </div>
+
+            <div id="employees-tab" class="tab-content p-6">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+                    <h3 class="text-lg font-medium text-gray-900 flex-shrink-0">Daftar Karyawan</h3>
+                    <div class="flex space-x-2 w-full sm:w-auto">
+                        <input type="text" id="searchEmployee" placeholder="Cari karyawan..." class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                </div>
+                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Saldo</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bergabung</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th></tr></thead><tbody id="employeesTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+            </div>
+
+            <div id="withdrawals-tab" class="tab-content p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Permintaan Penarikan</h3>
+                    </div>
+                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Karyawan</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alasan</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th></tr></thead><tbody id="withdrawalsTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+            </div>
+
+            <div id="transactions-tab" class="tab-content p-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+                    <h3 class="text-lg font-medium text-gray-900 flex-shrink-0">Log Transaksi</h3>
+                    <div class="flex space-x-2 w-full sm:w-auto">
+                        <select id="transactionFilter" class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <option value="all">Semua Transaksi</option>
+                            <option value="salary">Pembagian Gaji</option>
+                            <option value="withdrawal">Penarikan</option>
+                        </select>
+                        <button id="exportPdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm flex-shrink-0">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                         </div>
+                </div>
+                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Karyawan</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th></tr></thead><tbody id="transactionsTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                
+                <div class="mt-4 flex items-center justify-center gap-x-4">
+    <button id="prevPageBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+        <i class="fas fa-arrow-left mr-1.5"></i>Sebelumnya
+    </button>
+    <span id="pageInfo" class="text-sm text-gray-700 px-2">Halaman 1</span>
+    <button id="nextPageBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm flex items-center">
+        Berikutnya<i class="fas fa-arrow-right ml-1.5"></i>
+    </button>
+</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addEmployeeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Tambah Karyawan Baru</h3>
+                <form id="addEmployeeForm" class="space-y-4 transition-opacity duration-300 ease-in-out">
+                    <div><label class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="employeeName" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Password</label><input type="password" id="employeePassword" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
+                    <div class="flex justify-end space-x-3 pt-4"><button type="button" id="cancelAddEmployee" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md">Batal</button><button type="button" onclick="handleAddEmployee(event)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">Buat -></button></div>
+                </form>
+                <div id="linkGeneratedContainer" class="hidden text-center mt-4 transition-opacity duration-300 ease-in-out">
+                    <p class="text-sm text-gray-700 mb-2">Sukses:</p>
+                    <a id="generatedWaLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-block bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors"><i class="fab fa-whatsapp mr-2"></i>Buka WhatsApp</a>
+                    <p class="text-xs text-gray-500 mt-3">Klik tombol di atas untuk mengirim detail kredensial.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="distributeSalaryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Bagikan Gaji Serentak</h3>
+                <form id="distributeSalaryForm" class="space-y-4">
+                    <div><label class="block text-sm font-medium text-gray-700">Jumlah Gaji (Rp)</label><input type="text" id="salaryAmount" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Keterangan</label><textarea id="salaryDescription" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Gaji Pasang Tenda (Opsional)"></textarea></div>
+                    <div class="flex justify-end space-x-3 pt-4"><button type="button" id="cancelDistributeSalary" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md">Batal</button><button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">Bagikan</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="addSalaryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-1">Tambah Gaji Individu</h3>
+                <p class="text-sm text-gray-600 mb-4">Untuk: <span id="individualEmployeeName" class="font-bold"></span></p>
+                <form id="addSalaryForm" class="space-y-4">
+                    <input type="hidden" id="individualEmployeeId">
+                    <div><label class="block text-sm font-medium text-gray-700">Jumlah Gaji (Rp)</label><input type="text" id="individualSalaryAmount" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Keterangan</label><input type="text" id="individualSalaryDescription" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Bonus kerajinan"></div>
+                    <div class="flex justify-end space-x-3 pt-4"><button type="button" onclick="hideAddSalaryModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md">Batal</button><button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">Tambah Gaji</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationToast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        <span id="notificationMessage"></span>
+    </div>
+    
+    <div id="genericConfirmModal" class="fixed inset-0 bg-gray-800 bg-opacity-60 overflow-y-auto h-full w-full hidden flex items-center justify-center z-50">
+        <div class="relative mx-auto p-6 border w-11/12 max-w-sm shadow-lg rounded-md bg-white">
+            <div class="text-center">
+                <div id="confirmModalIconContainer" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <i id="confirmModalIcon" class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <h3 id="confirmModalTitle" class="text-lg leading-6 font-medium text-gray-900 mt-5">Konfirmasi Aksi</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="confirmModalMessage" class="text-sm text-gray-500">
+                        Apakah Anda yakin?
+                    </p>
+                </div>
+                <div class="items-center px-4 py-3 space-x-4">
+                    <button id="confirmModalCancelBtn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 w-24">
+                        Batal
+                    </button>
+                    <button id="confirmModalConfirmBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 w-24">
+                        Ya
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/security.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
