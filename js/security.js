@@ -235,14 +235,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
 function logSecurityEvent(event, details) {
     console.warn(`Security Event: ${event}`, details);
     
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        // Bisa ditambahkan logika pengiriman log ke server di sini
     }
 }
 
+// Export object Security untuk bisa diakses dari file lain jika perlu
 window.Security = Security;
 window.validateForm = validateForm;
 window.logSecurityEvent = logSecurityEvent;
