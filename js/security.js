@@ -170,20 +170,29 @@ function validateForm(formId, rules) {
     return isValid;
 }
 
-const currentPagePath = window.location.pathname;
+// =========================================================================
+// RUMAH DIMULAI DI SINI. Semua kode yang perlu jalan setelah halaman siap,
+// dimasukkan ke dalam sini.
+// =========================================================================
+document.addEventListener('DOMContentLoaded', function() {
 
-if (!currentPagePath.endsWith('/index.html') && currentPagePath !== '/' && currentPagePath.split('/').pop() !== '') {
-    if (!Security.session.isSessionValid()) {
-        // Tampilkan alert hanya jika session benar-benar tidak valid
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        Security.session.clearSession();
-        window.location.href = 'index.html';
-        return;
+    const currentPagePath = window.location.pathname;
+
+    // --- BLOK PENGECEKAN SESI (SATU-SATUNYA YANG KITA DEBATIN) ---
+    if (!currentPagePath.endsWith('/index.html') && currentPagePath !== '/' && currentPagePath.split('/').pop() !== '') {
+        if (!Security.session.isSessionValid()) {
+            // Tampilkan alert hanya jika session benar-benar tidak valid
+            alert('Sesi Anda telah berakhir. Silakan login kembali.');
+            Security.session.clearSession();
+            window.location.href = 'index.html';
+            return; // Sekarang ini legal karena ada di dalam fungsi
+        }
+
+        // Perbarui timestamp session jika valid
+        Security.session.updateSession();
     }
 
-    // Perbarui timestamp session jika valid
-    Security.session.updateSession();
-}    
+    // --- BLOK ANTI KLIK KANAN & DEVTOOLS ---
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
@@ -197,10 +206,12 @@ if (!currentPagePath.endsWith('/index.html') && currentPagePath !== '/' && curre
             }
         });
     }
-    
+
+    // --- EVENT LISTENER LAINNYA ---
     window.addEventListener('beforeunload', function() {
+        // Bisa diisi sesuatu nanti jika perlu
     });
-    
+
     document.addEventListener('input', function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
             const originalValue = e.target.value;
@@ -211,7 +222,7 @@ if (!currentPagePath.endsWith('/index.html') && currentPagePath !== '/' && curre
             }
         }
     });
-    
+
     document.addEventListener('submit', function(e) {
         const form = e.target;
         const formId = form.id || 'unknown';
@@ -223,6 +234,7 @@ if (!currentPagePath.endsWith('/index.html') && currentPagePath !== '/' && curre
         }
     });
 });
+
 
 function logSecurityEvent(event, details) {
     console.warn(`Security Event: ${event}`, details);
